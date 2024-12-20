@@ -60,35 +60,23 @@ std::unique_ptr<AggregationStats> aggregation_test(std::vector<Key> &keys, InitF
 
 };
 
-int main() {
+int main(int argc, char *argv[]) {
+  std::string hashmap_type = argc > 1 ? argv[1] : "std::unordered_map";
   std::vector<uint64_t> watch_ids = read_tsv_column<uint64_t>("../datasets/hits_v1.tsv", 0);
-  std::cout << "Watch IDs: " << watch_ids.size() << "\n";
 
-  {
-    using HashTableType = UnorderedMapType<std::uint64_t, size_t>;
-    using HashTable = HashTableType::HashTable;
-
-    auto stats = aggregation_test<std::uint64_t, HashTable>(watch_ids, [](HashTable &hash_table) {});
-    stats->show_stats(HashTableType::kName);
+  std::unique_ptr<AggregationStats> stats;
+  if (hashmap_type == "std::unordered_map") {
+    using HashTable = UnorderedMapType<uint64_t, size_t>::HashTable;
+    stats = aggregation_test<uint64_t, HashTable>(watch_ids, [](HashTable &hash_table) {});
+  } else if (hashmap_type == "absl::flat_hash_map") {
+    using HashTable = AbseilHashTableType<uint64_t, size_t>::HashTable;
+    stats = aggregation_test<uint64_t, HashTable>(watch_ids, [](HashTable &hash_table) {});
+  } else if (hashmap_type == "google::dense_hash_map") {
+    using HashTable = GoogleDenseHashTableType<uint64_t, size_t>::HashTable;
+    stats = aggregation_test<uint64_t, HashTable>(watch_ids, [](HashTable &hash_table) { hash_table.set_empty_key(0); });
   }
 
-  std::cout << "------" << "\n";
-
-  {
-    using HashTableType = AbseilHashTableType<std::uint64_t, size_t>;
-    using HashTable = HashTableType::HashTable;
-
-    auto stats = aggregation_test<std::uint64_t, HashTable>(watch_ids, [](HashTable &hash_table) {});
-    stats->show_stats(HashTableType::kName);
-  }
-
-  std::cout << "------" << "\n";
-
-  {
-    using HashTableType = GoogleDenseHashTableType<std::uint64_t, size_t>;
-    using HashTable = HashTableType::HashTable;
-
-    auto stats = aggregation_test<std::uint64_t, HashTable>(watch_ids, [](HashTable &hash_table) { hash_table.set_empty_key(0); });
-    stats->show_stats(HashTableType::kName);
+  if (stats) {
+    stats->show_stats(hashmap_type);
   }
 }

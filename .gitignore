@@ -1,3 +1,5 @@
 .cache
 build
 datasets
+perf.data
+perf.data.old

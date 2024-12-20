@@ -4,3 +4,6 @@
 [submodule "vendor/sparsehash"]
 	path = vendor/sparsehash
 	url = https://github.com/sparsehash/sparsehash-c11.git
+[submodule "vendor/flamegraph"]
+	path = vendor/flamegraph
+	url = https://github.com/brendangregg/Flamegraph.git
